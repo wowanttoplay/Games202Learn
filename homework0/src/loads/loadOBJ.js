@@ -14,7 +14,8 @@ function loadOBJ(renderer, path, name) {
 	}
 	function onError() { }
 
-	new THREE.MTLLoader(manager)
+	return new Promise((resolve, reject) => {
+		new THREE.MTLLoader(manager)
 		.setPath(path)
 		.load(name + '.mtl', function (materials) {
 			materials.preload();
@@ -59,6 +60,10 @@ function loadOBJ(renderer, path, name) {
 							renderer.addMesh(meshRender);
 						}
 					});
+					resolve();
 				}, onProgress, onError);
 		});
+    });
+
+	
 }
