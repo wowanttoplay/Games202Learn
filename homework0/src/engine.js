@@ -65,25 +65,28 @@ function GAMES202Main() {
 
 	Promise.all([
 		loadShaderFile('src/shaders/phongShader/vertex.glsl'),
-		loadShaderFile('src/shaders/phongShader/fragment.glsl'),
-		loadOBJ(renderer, 'assets/mary/', 'Marry')
-]).then(([vShader, fShader])=>{
-	VertexShader = vShader;
-	FragmentShader = fShader;
-
-
-	createGUI();
-
-	function mainLoop(now) {
-		cameraControls.update();
-
-		renderer.render(guiParams);
+		loadShaderFile('src/shaders/phongShader/fragment.glsl')
+	  ]).then(([vShader, fShader]) => {
+		VertexShader = vShader;
+		FragmentShader = fShader;
+	  
+		return loadOBJ(renderer, 'assets/mary/', 'Marry');
+	  }).then(() => {
+		createGUI();
+	  
+		function mainLoop(now) {
+		  cameraControls.update();
+		  renderer.render(guiParams);
+		  requestAnimationFrame(mainLoop);
+		}
+		
 		requestAnimationFrame(mainLoop);
-	}
-	requestAnimationFrame(mainLoop);
-}).catch(error =>{
-	console.error('Error Loading', error)
-});
+	  }).catch(error => {
+		console.error('Error Loading', error);
+	  });
+	  
+
+
 
 	
 }
