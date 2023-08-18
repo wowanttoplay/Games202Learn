@@ -51,14 +51,38 @@ function GAMES202Main() {
 	renderer.addLight(directionLight);
 
 	// Add shapes
+	function createGUI() {
+		const gui = new dat.gui.GUI();
+		// const panelModel = gui.addFolder('Model properties');
+		// panelModelTrans.add(GUIParams, 'x').name('X');
+		// panelModel.open();
+	}
+
+	function mainLoop(now) {
+		cameraControls.update();
+
+		renderer.render();
+		requestAnimationFrame(mainLoop);
+	}
 	
 	let floorTransform = setTransform(0, 0, -30, 4, 4, 4);
 	let obj1Transform = setTransform(0, 0, 0, 20, 20, 20);
 	let obj2Transform = setTransform(40, 0, -40, 10, 10, 10);
 
-	loadOBJ(renderer, 'assets/mary/', 'Marry', 'PhongMaterial', obj1Transform);
-	loadOBJ(renderer, 'assets/mary/', 'Marry', 'PhongMaterial', obj2Transform);
-	loadOBJ(renderer, 'assets/floor/', 'floor', 'PhongMaterial', floorTransform);
+	Promise.all([
+		loadOBJ(renderer, 'assets/mary/', 'Marry', 'PhongMaterial', obj1Transform),
+		loadOBJ(renderer, 'assets/mary/', 'Marry', 'PhongMaterial', obj2Transform),
+		loadOBJ(renderer, 'assets/floor/', 'floor', 'PhongMaterial', floorTransform)
+	]).then(()=>{
+			
+	createGUI();
+
+	
+	requestAnimationFrame(mainLoop);
+
+	});
+
+	
 	
 
 	// let floorTransform = setTransform(0, 0, 0, 100, 100, 100);
@@ -70,21 +94,7 @@ function GAMES202Main() {
 	//loadOBJ(renderer, 'assets/basic/', 'plane', 'PhongMaterial', floorTransform);
 
 
-	function createGUI() {
-		const gui = new dat.gui.GUI();
-		// const panelModel = gui.addFolder('Model properties');
-		// panelModelTrans.add(GUIParams, 'x').name('X');
-		// panelModel.open();
-	}
-	createGUI();
 
-	function mainLoop(now) {
-		cameraControls.update();
-
-		renderer.render();
-		requestAnimationFrame(mainLoop);
-	}
-	requestAnimationFrame(mainLoop);
 }
 
 function setTransform(t_x, t_y, t_z, s_x, s_y, s_z) {
