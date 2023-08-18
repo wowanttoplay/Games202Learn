@@ -15,14 +15,17 @@ varying highp vec3 vFragPos;
 varying highp vec3 vNormal;
 
 // Shadow map related variables
-#define NUM_SAMPLES 20
+#define NUM_SAMPLES 100
 #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
 #define PCF_NUM_SAMPLES NUM_SAMPLES
 #define NUM_RINGS 10
 
-#define EPS 1e-3
+#define EPS 0.02
 #define PI 3.141592653589793
 #define PI2 6.283185307179586
+
+#define LIGHT_RADIUS 10
+
 
 uniform sampler2D uShadowMap;
 
@@ -84,22 +87,60 @@ void uniformDiskSamples( const in vec2 randomSeed ) {
 }
 
 float findBlocker( sampler2D shadowMap,  vec2 uv, float zReceiver ) {
-	return 1.0;
+  poissonDiskSamples(uv);
+  float blockDepth = 0.0;
+  float Num = 0.0;
+  float filterStride = 8.0/ 2048.0;
+  for (int index = 0; index < NUM_SAMPLES; ++index) {
+    float lightDepth = unpack(texture2D(shadowMap, poissonDisk[index] * filterStride + uv));
+    if (lightDepth + EPS < zReceiver)
+    {
+      blockDepth += lightDepth;
+      Num += 1.0;
+    }
+  }
+  if (Num < 1.0)
+  {
+    return 1.0;
+  }
+	return blockDepth / Num;
 }
 
 float PCF(sampler2D shadowMap, vec4 coords) {
-  return 1.0;
+  poissonDiskSamples(coords.xy);
+  float shadingDepth = coords.z;
+  float visibility = 0.0;
+  float filterStride = 5.0;
+  filterStride /= 2048.0;
+  for(int index = 0; index < NUM_SAMPLES; ++index) {
+    float lightDepth = unpack(texture2D(shadowMap,  poissonDisk[index].xy * filterStride + coords.xy));
+    visibility += (lightDepth + EPS < shadingDepth ? 0.0 : 1.0);
+  }
+  visibility /= float(NUM_SAMPLES);
+  return visibility;
 }
 
 float PCSS(sampler2D shadowMap, vec4 coords){
+  
+  float shadingDepth = coords.z;
+  float visibility = 0.0;
 
   // STEP 1: avgblocker depth
+  float blockDepth = findBlocker(shadowMap, coords.xy, shadingDepth);
 
   // STEP 2: penumbra size
+  float penumbra = (shadingDepth - blockDepth) * float(LIGHT_RADIUS) / blockDepth;
 
   // STEP 3: filtering
+  float filterStride = penumbra / 2048.0;
   
-  return 1.0;
+  for(int index = 0; index < NUM_SAMPLES; ++index) {
+    float lightDepth = unpack(texture2D(shadowMap,  poissonDisk[index].xy * filterStride + coords.xy));
+    visibility += (lightDepth + EPS < shadingDepth ? 0.0 : 1.0);
+  }
+  visibility /= float(NUM_SAMPLES);
+
+  return visibility;
 
 }
 
@@ -138,9 +179,9 @@ void main(void) {
   shadowCoord.xyz = (shadowCoord.xyz + 1.0) / 2.0;
 
   float visibility;
-  visibility = useShadowMap(uShadowMap, vec4(shadowCoord, 1.0));
-  //visibility = PCF(uShadowMap, vec4(shadowCoord, 1.0));
-  //visibility = PCSS(uShadowMap, vec4(shadowCoord, 1.0));
+  // visibility = useShadowMap(uShadowMap, vec4(shadowCoord, 1.0));
+  // visibility = PCF(uShadowMap, vec4(shadowCoord, 1.0));
+  visibility = PCSS(uShadowMap, vec4(shadowCoord, 1.0));
 
   vec3 phongColor = blinnPhong();
 
