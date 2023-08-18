@@ -74,12 +74,8 @@ function GAMES202Main() {
 		loadOBJ(renderer, 'assets/mary/', 'Marry', 'PhongMaterial', obj2Transform),
 		loadOBJ(renderer, 'assets/floor/', 'floor', 'PhongMaterial', floorTransform)
 	]).then(()=>{
-			
-	createGUI();
-
-	
-	requestAnimationFrame(mainLoop);
-
+		createGUI();
+		requestAnimationFrame(mainLoop);
 	});
 
 	
