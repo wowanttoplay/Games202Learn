@@ -1,5 +1,5 @@
 
-function loadOBJ(renderer, path, name) {
+async function loadOBJ(renderer, path, name) {
 
 	const manager = new THREE.LoadingManager();
 	manager.onProgress = function (item, loaded, total) {
@@ -14,12 +14,14 @@ function loadOBJ(renderer, path, name) {
 	}
 	function onError() { }
 
-	return new Promise((resolve, reject) => {
-		new THREE.MTLLoader(manager)
+
+	new THREE.MTLLoader(manager)
 		.setPath(path)
 		.load(name + '.mtl', function (materials) {
 			materials.preload();
-			new THREE.OBJLoader(manager)
+
+			setTimeout(() => {
+				new THREE.OBJLoader(manager)
 				.setMaterials(materials)
 				.setPath(path)
 				.load(name + '.obj', function (object) {
@@ -42,16 +44,14 @@ function loadOBJ(renderer, path, name) {
 
 							let textureSample = 0;
 							let myMaterial = new PhongMaterial(mat.color.toArray(), colorMap, mat.specular.toArray(), renderer.lights[0].entity.mat.intensity);
-							
-							
+
+
 							let meshRender = new MeshRender(renderer.gl, mesh, myMaterial);
 							renderer.addMesh(meshRender);
 						}
 					});
-					resolve();
 				}, onProgress, onError);
+			}, 100);
+			
 		});
-    });
-
-	
 }
