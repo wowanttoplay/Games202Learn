@@ -115,6 +115,7 @@ else()
 endif()
 
 target_link_libraries(warptest tbb_static nanogui ${NANOGUI_EXTRA_LIBS})
+target_compile_options(nori PUBLIC /utf-8) # MSVC unicode support
 
 # Force colored output for the ninja generator
 if (CMAKE_GENERATOR STREQUAL "Ninja")

@@ -8,10 +8,10 @@
 #include <fstream>
 #include <random>
 #include <stb_image.h>
+#include <nanogui/vector.h>
 
 NORI_NAMESPACE_BEGIN
-
-namespace ProjEnv
+    namespace ProjEnv
 {
     std::vector<std::unique_ptr<float[]>>
     LoadCubemapImages(const std::string &cubemapDir, int &width, int &height,
@@ -129,6 +129,17 @@ namespace ProjEnv
                     int index = (y * width + x) * channel;
                     Eigen::Array3f Le(images[i][index + 0], images[i][index + 1],
                                       images[i][index + 2]);
+
+                    for (int l = 0 ; l < SHOrder; ++l)
+                    {
+                        for (int m = -l; m <= l; ++m)
+                        {
+                            float delta_w = CalcArea(x, y, width, height);
+                            auto basic_sh_func = sh::EvalSH(l, m, Eigen::Vector3d(dir.x(), dir.y(), dir.z()).normalized());
+                            SHCoeffiecents[sh::GetIndex(l, m)] += Le * basic_sh_func * delta_w;
+                        }
+                    }
+                   
                 }
             }
         }
@@ -210,7 +221,8 @@ public:
                 {
                     // TODO: here you need to calculate unshadowed transport term of a given direction
                     // TODO: 此处你需要计算给定方向下的unshadowed传输项球谐函数值
-                    return 0;
+                    double NdotH = wi.normalized().dot(n.normalized());
+                    return  NdotH > 0 ? NdotH : 0;
                 }
                 else
                 {
@@ -294,7 +306,7 @@ private:
     std::string m_CubemapPath;
     Eigen::MatrixXf m_TransportSHCoeffs;
     Eigen::MatrixXf m_LightCoeffs;
-};
+}; 
 
 NORI_REGISTER_CLASS(PRTIntegrator, "prt");
 NORI_NAMESPACE_END
