@@ -1,4 +1,4 @@
-function loadOBJ(renderer, path, name, objMaterial, transform) {
+async function loadOBJ(renderer, path, name, objMaterial, transform) {
 
 	const manager = new THREE.LoadingManager();
 	manager.onProgress = function (item, loaded, total) {
@@ -20,7 +20,9 @@ function loadOBJ(renderer, path, name, objMaterial, transform) {
 		.setPath(path)
 		.load(name + '.mtl', function (materials) {
 			materials.preload();
-			new THREE.OBJLoader(manager)
+
+			setTimeout(() => {
+				new THREE.OBJLoader(manager)
 				.setMaterials(materials)
 				.setPath(path)
 				.load(name + '.obj', function (object) {
@@ -62,6 +64,9 @@ function loadOBJ(renderer, path, name, objMaterial, transform) {
 								case 'SkyBoxMaterial':
 									material = buildSkyBoxMaterial("./src/shaders/skyBoxShader/SkyBoxVertex.glsl", "./src/shaders/skyBoxShader/SkyBoxFragment.glsl");
 									break;
+								
+								case 'PrtMaterial' :
+									material = buildPrtMaterial("./src/shaders/prtShader/prtVertex.glsl", "./src/shaders/prtShader/prtFragment.glsl");
 							}
 
 							material.then((data) => {
@@ -79,5 +84,8 @@ function loadOBJ(renderer, path, name, objMaterial, transform) {
 						}
 					});
 				}, onProgress, onError);
+			}, 100);
+
+			
 		});
 }

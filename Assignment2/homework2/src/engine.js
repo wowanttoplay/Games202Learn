@@ -1,6 +1,6 @@
 let precomputeLT = [];
 let precomputeL = [];
-var cameraPosition = [50, 0, 100];
+var cameraPosition = [50, 600, 800];
 
 var envmap = [
 	'assets/cubemap/GraceCathedral',
@@ -33,7 +33,7 @@ async function GAMES202Main() {
 	}
 
 	// Add camera
-	const camera = new THREE.PerspectiveCamera(75, gl.canvas.clientWidth / gl.canvas.clientHeight, 1e-2, 1000);
+	const camera = new THREE.PerspectiveCamera(90, gl.canvas.clientWidth / gl.canvas.clientHeight, 1e-2, 10000);
 	camera.position.set(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
 
 	// Add resize listener
@@ -81,41 +81,6 @@ async function GAMES202Main() {
 		cubeMaps.push(new CubeTexture(gl, urls))
 		await cubeMaps[i].init();
 	}
-	// load skybox
-	loadOBJ(renderer, 'assets/testObj/', 'testObj', 'SkyBoxMaterial', skyBoxTransform);
-
-	// file parsing
-	// for (let i = 0; i < envmap.length; i++) {
-
-	// 	let val = '';
-	// 	await this.loadShaderFile(envmap[i] + "/transport.txt").then(result => {
-	// 		val = result;
-	// 	});
-
-	// 	let preArray = val.split(/[(\r\n)\r\n' ']+/);
-	// 	let lineArray = [];
-	// 	precomputeLT[i] = []
-	// 	for (let j = 1; j <= Number(preArray.length) - 2; j++) {
-	// 		precomputeLT[i][j - 1] = Number(preArray[j])
-	// 	}
-	// 	await this.loadShaderFile(envmap[i] + "/light.txt").then(result => {
-	// 		val = result;
-	// 	});
-
-	// 	precomputeL[i] = val.split(/[(\r\n)\r\n]+/);
-	// 	precomputeL[i].pop();
-	// 	for (let j = 0; j < 9; j++) {
-	// 		lineArray = precomputeL[i][j].split(' ');
-	// 		for (let k = 0; k < 3; k++) {
-	// 			lineArray[k] = Number(lineArray[k]);
-	// 		}
-	// 		precomputeL[i][j] = lineArray;
-	// 	}
-	// }
-
-	// TODO: load model - Add your Material here
-	// loadOBJ(renderer, 'assets/bunny/', 'bunny', 'addYourPRTMaterial', boxTransform);
-	// loadOBJ(renderer, 'assets/bunny/', 'bunny', 'addYourPRTMaterial', box2Transform);
 
 	function createGUI() {
 		const gui = new dat.gui.GUI();
@@ -124,8 +89,6 @@ async function GAMES202Main() {
 		panelModel.open();
 	}
 
-	createGUI();
-
 	function mainLoop(now) {
 		cameraControls.update();
 
@@ -133,7 +96,55 @@ async function GAMES202Main() {
 
 		requestAnimationFrame(mainLoop);
 	}
-	requestAnimationFrame(mainLoop);
+
+	// load skybox
+	// file parsing
+	for (let i = 0; i < envmap.length; i++) {
+
+		let val = '';
+		await this.loadShaderFile(envmap[i] + "/transport.txt").then(result => {
+			val = result;
+		});
+
+		let preArray = val.split(/[(\r\n)\r\n' ']+/);
+		let lineArray = [];
+		precomputeLT[i] = []
+		for (let j = 1; j <= Number(preArray.length) - 2; j++) {
+			precomputeLT[i][j - 1] = Number(preArray[j])
+		}
+		await this.loadShaderFile(envmap[i] + "/light.txt").then(result => {
+			val = result;
+		});
+
+		precomputeL[i] = val.split(/[(\r\n)\r\n]+/);
+		precomputeL[i].pop();
+		for (let j = 0; j < 9; j++) {
+			lineArray = precomputeL[i][j].split(' ');
+			for (let k = 0; k < 3; k++) {
+				lineArray[k] = Number(lineArray[k]);
+			}
+			precomputeL[i][j] = lineArray;
+		}
+	}
+	console.log(precomputeL);
+
+	// TODO: load model - Add your Material here
+
+
+	Promise.all([
+		loadOBJ(renderer, 'assets/testObj/', 'testObj', 'SkyBoxMaterial', skyBoxTransform),
+		loadOBJ(renderer, 'assets/mary/', 'mary', 'PrtMaterial', boxTransform),
+		// loadOBJ(renderer, 'assets/bunny/', 'bunny', 'PrtMaterial', box2Transform)
+	]).then(() => {
+
+		createGUI();
+
+		requestAnimationFrame(mainLoop);
+
+	});
+	
+
+
 }
 
 function setTransform(t_x, t_y, t_z, s_x, s_y, s_z) {

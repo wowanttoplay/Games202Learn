@@ -10,6 +10,8 @@
 #include <stb_image.h>
 #include <nanogui/vector.h>
 
+#include "nori/block.h"
+
 NORI_NAMESPACE_BEGIN
     namespace ProjEnv
 {
@@ -130,7 +132,7 @@ NORI_NAMESPACE_BEGIN
                     Eigen::Array3f Le(images[i][index + 0], images[i][index + 1],
                                       images[i][index + 2]);
 
-                    for (int l = 0 ; l < SHOrder; ++l)
+                    for (int l = 0 ; l <= SHOrder; ++l)
                     {
                         for (int m = -l; m <= l; ++m)
                         {
@@ -228,7 +230,13 @@ public:
                 {
                     // TODO: here you need to calculate shadowed transport term of a given direction
                     // TODO: 此处你需要计算给定方向下的shadowed传输项球谐函数值
-                    return 0;
+                    double NdotH = wi.normalized().dot(n.normalized());
+                    bool intersect = scene->rayIntersect(Ray3f(v, wi.normalized()));
+                    if (NdotH < 0 || intersect)
+                    {
+                        return 0;
+                    }
+                    return NdotH;
                 }
             };
             auto shCoeff = sh::ProjectFunction(SHOrder, shFunc, m_SampleCount);
@@ -240,6 +248,59 @@ public:
         if (m_Type == Type::Interreflection)
         {
             // TODO: leave for bonus
+            for (int bounceIndex = 0; bounceIndex < m_Bounce; ++bounceIndex)
+            {
+                for (int i = 0; i < mesh->getVertexCount(); i++)
+                {
+                    const Point3f &v = mesh->getVertexPositions().col(i);
+                    const Normal3f &n = mesh->getVertexNormals().col(i);
+                    
+                    const int sampleSide = static_cast<int>(floor(sqrt(m_SampleCount)));
+                    std::unique_ptr<std::vector<double>> coeffs(new std::vector<double>());
+                    coeffs->assign(SHCoeffLength, 0.0);
+                    
+                    std::random_device rd;
+                    std::mt19937 gen(rd());
+                    std::uniform_real_distribution<> rng(0.0, 1.0);
+
+                    
+                    for (int t = 0; t < sampleSide; t++) {
+                        for (int p = 0; p < sampleSide; p++) {
+                            double alpha = (t + rng(gen)) / sampleSide;
+                            double beta = (p + rng(gen)) / sampleSide;
+                            // See http://www.bogotobogo.com/Algorithms/uniform_distribution_sphere.php
+                            double phi = 2.0 * M_PI * beta;
+                            double theta = acos(2.0 * alpha - 1.0);
+
+                            Eigen::Array3d d = sh::ToVector(phi, theta);
+                            const auto wi = Vector3f(d.x(), d.y(), d.z());
+                            double NdotH = wi.normalized().dot(n);
+
+                            // evaluate the analytic function for the current spherical coords
+                            double cValue = 0.0;
+                            Intersection Info;
+                            if (NdotH > 0.0 && scene->rayIntersect(Ray3f(v, wi.normalized()), Info))
+                            {
+                                const auto& ids = Info.tri_index;
+                                for (int j = 0; j < SHCoeffLength; ++j)
+                                {
+                                    (*coeffs)[j] += (m_TransportSHCoeffs.col(ids.x()).coeff(j) * Info.bary.x() +
+                                        m_TransportSHCoeffs.col(ids.y()).coeff(j) * Info.bary.y() +
+                                            m_TransportSHCoeffs.col(ids.z()).coeff(j) * Info.bary.z()) * NdotH;
+                                }
+                            }
+                            
+                        }
+                    }
+                    
+
+                    for (int j = 0; j < SHCoeffLength; ++j)
+                    {
+                        m_TransportSHCoeffs.col(i).coeffRef(j) += (*coeffs)[j] / pow(sampleSide, 2);
+                    }
+                    
+                }
+            }
         }
 
         // Save in face format

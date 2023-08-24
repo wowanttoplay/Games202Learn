@@ -1,5 +1,6 @@
 function getRotationPrecomputeL(precompute_L, rotationMatrix){
 
+	return precompute_L;
 
 	return result;
 }
