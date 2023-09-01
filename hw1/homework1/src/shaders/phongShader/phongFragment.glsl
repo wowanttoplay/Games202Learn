@@ -15,12 +15,12 @@ varying highp vec3 vFragPos;
 varying highp vec3 vNormal;
 
 // Shadow map related variables
-#define NUM_SAMPLES 100
+#define NUM_SAMPLES 20
 #define BLOCKER_SEARCH_NUM_SAMPLES NUM_SAMPLES
 #define PCF_NUM_SAMPLES NUM_SAMPLES
 #define NUM_RINGS 10
 
-#define EPS 0.02
+#define EPS 0.01
 #define PI 3.141592653589793
 #define PI2 6.283185307179586
 
@@ -45,7 +45,9 @@ highp float rand_2to1(vec2 uv ) {
 
 float unpack(vec4 rgbaDepth) {
     const vec4 bitShift = vec4(1.0, 1.0/256.0, 1.0/(256.0*256.0), 1.0/(256.0*256.0*256.0));
-    return dot(rgbaDepth, bitShift);
+    float depth = dot(rgbaDepth, bitShift);
+    return depth < EPS ? 1.0 : depth;
+    // return dot(rgbaDepth, bitShift);
 }
 
 vec2 poissonDisk[NUM_SAMPLES];
