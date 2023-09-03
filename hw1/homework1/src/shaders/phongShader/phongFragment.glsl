@@ -146,6 +146,8 @@ float PCSS(sampler2D shadowMap, vec4 coords){
 
 }
 
+float VSSM(sampler2D shadowMap, )
+
 
 float useShadowMap(sampler2D shadowMap, vec4 shadowCoord){
   float lightDepth = unpack(texture2D(shadowMap, shadowCoord.xy));

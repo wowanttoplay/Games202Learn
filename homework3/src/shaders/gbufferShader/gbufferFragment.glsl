@@ -45,6 +45,6 @@ void main(void) {
   gl_FragData[0] = vec4(kd, 1.0);
   gl_FragData[1] = vec4(vec3(vDepth), 1.0);
   gl_FragData[2] = vec4(ApplyTangentNormalMap(), 1.0);
-  gl_FragData[3] = vec4(vec3(SimpleShadowMap(vPosWorld.xyz, 1e-2)), 1.0);
+  gl_FragData[3] = vec4(vec3(SimpleShadowMap(vPosWorld.xyz, 1e-2)), 0.2);
   gl_FragData[4] = vec4(vec3(vPosWorld.xyz), 1.0);
 }
